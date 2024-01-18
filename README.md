@@ -11,7 +11,13 @@ See prompts doc for print out.
 
 ## How to initialize/run your application (where applicable)
 
+Game logic:
+
 `python3 ten_thousand_pack/game_logic.py`
+
+To play the game:
+
+`python3 -m ten_thousand_pack.game`
 
 ## Tests
 
@@ -43,3 +49,7 @@ The test file test_caculate_score tests for scoring of different variations incl
 + Two pairs
 + Three pairs
 + Two triples
+
+## Version II Test
+
+All tests are gameplay driven. See tests/version_2 for test cases.
