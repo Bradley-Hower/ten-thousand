@@ -1,145 +1,205 @@
 from ten_thousand_pack.game_logic import GameLogic
 
-class Game:
-  scoring = GameLogic.calculate_score
-  dice_held = []
-  score = 0
-  new_score = 0
-  bank = 0
-  roundnum = 0
 
-  def play():
-    print(
-    """
-    Welcome to Ten Thousand
-    (y)es to play or (n)o to decline
-    """
-    )
+scoring = GameLogic.calculate_score
 
-    response = ""
+# score = 0
+# roundnum = 0
 
-    while response != "y" or response != "n":
-      response = input("> ")
-      if response == "y":
-        print(
-        """
-        Starting round 1
-        Rolling 6 dice...
-        """
-        )
-        return
-      elif response == "n":
-        print("OK. Maybe another time")
-        quit()
-    
-  @classmethod
-  def round(cls):
+##new globals
+round_set = 1
+dice_held = []
+score = 0
+unbanked = 0
+totalrounds = 2
+zilchmark = False
+setroller = None
+
+def play(roller=None, num_rounds=20):
+  global setroller
+
+  setroller = roller
+  invite_to_play(num_rounds)
+
+
+def invite_to_play(num_rounds):
+  print("Welcome to Ten Thousand")
+  print("(y)es to play or (n)o to decline")
   
-    cls.dice_held = []
-    while cls.roundnum <= 1: 
-
-      while True:
-        # Score keeping. Two scorings to compare after roll to see if bust.
-        cls.score = cls.new_score
-        remaining_dice = 6 - len(cls.dice_held)
-        roll1 = list(GameLogic.roll_dice(remaining_dice))
-        cls.new_score = GameLogic.calculate_score(roll1)
-        cls.new_score += cls.score
-
-        # Prints out current roll
-        print('*** ', end="")
-        for i in roll1:
-          print(f'{i} ', end="")
-        print(' ***')
-
-        if cls.score > 0:
-          if cls.roundnum > 1:
-            print(f"Nice Game. Your total score was {cls.new_score} pints.")
-            quit()
-          elif cls.new_score <= cls.score:
-            print(
-              """
-              You busted!
-              """
-            )
-            quit()
-
-        cls.new_score += cls.score
-
-
-        selected_dice = []
-        roll_of_dice = []
-
-        # Saves roll for modification
-        for x in roll1:
-          roll_of_dice.append(x)
-        user_input = input("Enter a sequence of dice (e.g., 4452) or 'q' to quit: ")
-
-        if user_input == "q":
-          print(f'Thanks for playing. You earned {cls.new_score} points')
-          quit()
-
-        # Iterate through each character in the user_input, if valid, reserves dice, if invalid, requests again.
-        
-        try:
-          for char in user_input:
-            x = roll_of_dice.index(int(char))
-            to_pop = roll_of_dice.pop(x)
-            selected_dice.append(to_pop)
-          for x in selected_dice:
-            cls.dice_held.append(x)
-
-          print("Reserved dice:", cls.dice_held)
-
-          # Calculates score of held thus far
-          dice_held_score = GameLogic.calculate_score(cls.dice_held)
-          remaining_dice = 6 - len(cls.dice_held)
-
-          print(
-            f"""
-            You have {dice_held_score} unbanked points and {remaining_dice} dice remaining. 
-            (r)oll again, (b)ank your points or (q)uit:
-            """
-            )
-          
-          roll_sub = input("> ")
-
-          # If rolling
-          if roll_sub == "r":     
-            True
-
-          # If banked
-          elif roll_sub == "b":
-            cls.score = cls.new_score
-            cls.bank += cls.score
-
-            print(
-              f"""
-              You banked {cls.bank} points in round 1
-              Total score is {cls.score} points
-              """)
-            
-            # Sets up for round two
-            cls.roundnum += 1
-            if cls.roundnum == 1:
-            
-              print(
-                """
-                Starting round 2
-                Rolling 6 dice...
-                """
-                )
-            False
-
-          elif roll_sub == "q":
-
-            print(f"You quit. Your total score was {cls.new_score} pints.")
-            quit()
-
-        except:
-          print("Not a vald entry.")
+  response = ""
+  
+  while response != "y" or response != "n":
+    response = input("> ")
     
+    if response == "y":
+      start_game(num_rounds)
+    
+    elif response == "n":
+      print("OK. Maybe another time")
+      quit()
+
+def start_game(num_rounds):
+  global round_set
+
+  while round_set <= totalrounds:
+    print(f"Starting round {round_set}")
+    for i in range(num_rounds):
+      do_round()
+
+def do_round():
+  global dice_held
+  global round_set
+  global zilchmark
+
+  # Caculate number of dice to roll
+  remaining_dice = 6 - len(dice_held) 
+
+  # Roll
+  roll1 = do_roll(remaining_dice) 
+  print(f"Rolling {remaining_dice} dice...")
+  format_roll(roll1)
+
+  # Select dice or quit
+  
+  confirm_keepers(roll1)
+  endround_test()
+
+  return
+
+def confirm_keepers(roll):
+  global dice_held
+  global zilchmark
+
+  points = GameLogic.calculate_score(roll)
+  if points == 0:
+    zilch()
+    zilchmark = True
+    return
+  
+  while True:
+    print("Enter dice to keep, or (q)uit:")
+    user_input = input("> ")
+
+    if user_input == "q":
+      decline_game()
+    try:
+
+
+      if GameLogic.validate_keepers(roll, user_input):
+        for x in user_input:
+          dice_held.append(int(x))
+  
+        # Confrim Hotdice
+        number_scoring = GameLogic.get_scorers(dice_held)
+        print(len(number_scoring))  
+        remaining_dice = 6 - len(dice_held) 
+        print(remaining_dice)
+        if remaining_dice == 0 and len(number_scoring) == 6:
+          return False
+        else:
+          print("Faking it")
+          return True
+    except:
+      return True    
+    print("Cheater!!! Or possibly made a typo...")
+    dice_held = []
+    format_roll(roll)
+
+def do_roll(num_dice):
+  
+  if setroller:
+    return setroller(num_dice)
+  else:
+    roll = GameLogic.roll_dice(num_dice)
+    return roll
+
+def format_roll(roll):
+  # Prints out current roll
+  print('*** ' + ' '.join(map(str, roll)) + ' ***')
+
+def endround_test():
+  global zilchmark
+
+  if zilchmark == False:  
+    tally()
+    if round_set > totalrounds:
+      decline_game()
+  zilchmark = False
+
+def tally():
+  global dice_held
+  global unbanked
+  global score
+  global round_set
+
+  remaining_dice_to_roll = 6 - len(dice_held)
+  points = GameLogic.calculate_score(dice_held)
+  unbanked += points
+
+  print(f"You have {unbanked} unbanked points and {remaining_dice_to_roll} dice remaining")
+  print("(r)oll again, (b)ank your points or (q)uit:")
+
+  select_input = ''
+
+  while True:
+    while select_input != "r" or select_input != "b" or select_input != "q":
+      select_input = input("> ")
+
+      if select_input == "r":
+        return    
+      
+      elif select_input == "b":
+        print(f"You banked {unbanked} points in round {round_set}")
+        score += unbanked
+        print(f"Total score is {score} points")
+        unbanked = 0
+        round_set += 1
+        dice_held = []
+
+        if round_set <= totalrounds:
+          print(f"Starting round {round_set}")
+        return
+      
+      elif select_input == "q":
+        decline_game()
+    False
+
+def zilch():
+  global dice_held
+  global unbanked
+  global round_set
+
+  unbanked = 0
+  dice_held = []
+  
+  print(
+    """****************************************
+**        Zilch!!! Round over         **
+****************************************"""
+    )
+  print(f"You banked {unbanked} points in round {round_set}")
+  print(f"Total score is {score} points")
+  
+  round_set += 1
+
+  if round_set <= totalrounds:
+    print(f"Starting round {round_set}")
+  return
+
+def decline_game():
+  global score
+
+  print(f'Thanks for playing. You earned {score} points')
+  quit()
+  
 if __name__ == "__main__":
-  game = Game
-  game.play()
-  game.round()
+  rolls = [
+    (1, 3, 4, 2, 3, 6),
+    (4, 4, 4, 4, 4, 4),
+    (1, 1, 2, 5, 1, 6)
+  ]
+  def mock_roller(num_dice):
+    return rolls.pop(0)
+  
+  # play(roller=mock_roller)
+  play()
