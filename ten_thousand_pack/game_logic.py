@@ -3,6 +3,50 @@ import random
 
 class GameLogic:
     @staticmethod
+    def validate_keepers(roll, keepers):
+        roll_of_dice = []
+
+        # Saves roll for modification
+        for x in roll:
+          roll_of_dice.append(x)
+        try:
+
+            for die in keepers:
+                x = roll_of_dice.index(int(die))
+                roll_of_dice.pop(x)
+            return True
+        except:
+            return False
+
+    @staticmethod
+    def get_scorers(dice):
+        # Check if no dice were rolled
+        if len(dice) == 0:
+            return []
+
+        # Check for a straight
+        if set(dice) == {1, 2, 3, 4, 5, 6}:
+            return dice  # All dice score in a straight
+
+        # Check for three pairs
+        if len(dice) == 6 and len(Counter(dice)) == 3 and all(count == 2 for count in Counter(dice).values()):
+            return dice  # All dice score in three pairs scenario
+
+        scoring_dice = []
+
+        counts = Counter(dice)
+
+        for num, count in counts.items():
+            if count >= 3:
+                scoring_dice.extend([num] * 3)  # Add all three dice of the same number to scoring_dice
+            elif num == 1:
+                scoring_dice.extend([1] * count)  # Add all ones to scoring_dice
+            elif num == 5:
+                scoring_dice.extend([5] * count)  # Add all fives to scoring_dice
+
+        return scoring_dice
+
+    @staticmethod
     def calculate_score(dice):
         "Here the code is confirming an actual roll has occurred so as to avoid a exeption error"
         if len(dice) == 0:

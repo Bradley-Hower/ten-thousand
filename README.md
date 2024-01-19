@@ -1,4 +1,4 @@
-# LAB - Class 06
+# LAB - Class 06, 07, 08
 
 Project: Ten Thousand - version 1
 Author: Bradley Hower in collaboration with Brendan Huddleston and Errol Vidad
