@@ -31,6 +31,8 @@ The test file test_roll_dice includes testing for dice rolls of various numbers 
 
 The test file test_caculate_score tests for scoring of different variations including:
 
+Scoring
+
 + Singles of a number
 + Doubles of a number
 + Two singles of two numbers
@@ -53,3 +55,22 @@ The test file test_caculate_score tests for scoring of different variations incl
 ## Version II Test
 
 All tests are gameplay driven. See tests/version_2 for test cases.
+
+### Version III Tests
+
+Hot Dice
+
++ Confirms if all scoring dice leads to another roll
+
+Cheat and fix
+
++ Test input validation
++ Allows spacing
+
+Repeat Rollers
+
++ Tests the ability to roll more than once
+
+Zilcher
+
++ Tests if no dice score, ends round
