@@ -1,6 +1,5 @@
 from ten_thousand_pack.game_logic import GameLogic
 
-
 scoring = GameLogic.calculate_score
 
 # score = 0
@@ -10,6 +9,7 @@ scoring = GameLogic.calculate_score
 round_set = 1
 dice_held = []
 score = 0
+hotdicepoints = 0
 unbanked = 0
 totalrounds = 2
 zilchmark = False
@@ -56,6 +56,8 @@ def do_round():
   global zilchmark
 
   # Caculate number of dice to roll
+  if len(dice_held) == 6:
+    dice_held = []
   remaining_dice = 6 - len(dice_held) 
 
   if round_set <= totalrounds:
@@ -85,6 +87,8 @@ def confirm_keepers(roll):
     return
   
   while True:
+    global hotdicepoints
+
     print("Enter dice to keep, or (q)uit:")
     user_input = input("> ")
     nospaces = user_input.replace(" ", "")
@@ -98,11 +102,10 @@ def confirm_keepers(roll):
         for x in nospaces:
           dice_held.append(int(x))
       # Confrim Hotdice
-        remaining_dice = 6 - len(dice_held) 
+        remaining_dice = 6 - len(dice_held)
         number_scoring = GameLogic.get_scorers(dice_held)
         if remaining_dice == 0 and len(number_scoring) == 6:
-          unbanked += GameLogic.calculate_score(dice_held)
-          dice_held = []
+          hotdicepoints += GameLogic.calculate_score(dice_held)
           return False
         elif remaining_dice > 0:
           return False
@@ -142,12 +145,17 @@ def tally():
   global dice_held
   global score
   global round_set
+  global hotdicepoints
+  global unbanked
 
+  if len(dice_held) == 6:
+    dice_held = []
   remaining_dice_to_roll = 6 - len(dice_held)
 
-  rollpoints = GameLogic.calculate_score(dice_held)
-
-  print(f"You have {rollpoints} unbanked points and {remaining_dice_to_roll} dice remaining")
+  unbanked += GameLogic.calculate_score(dice_held)
+  unbanked += hotdicepoints
+  
+  print(f"You have {unbanked} unbanked points and {remaining_dice_to_roll} dice remaining")
   print("(r)oll again, (b)ank your points or (q)uit:")
 
   select_input = ''
@@ -157,16 +165,19 @@ def tally():
       select_input = input("> ")
 
       if select_input == "r":
+        unbanked = 0
         return    
       
       elif select_input == "b":
         unbanked = GameLogic.calculate_score(dice_held)
+        unbanked += hotdicepoints
         print(f"You banked {unbanked} points in round {round_set}")
         score += unbanked
         print(f"Total score is {score} points")
         unbanked = 0
         round_set += 1
         dice_held = []
+        hotdicepoints = 0
 
         if round_set <= totalrounds:
           print(f"Starting round {round_set}")
@@ -224,10 +235,12 @@ if __name__ == "__main__":
     (3, 2, 3, 2, 1, 4),
     (5, 2, 3, 5, 4, 2),
     (1, 2, 5, 1, 2, 1),
+    (4, 4, 4, 4, 4,4),
     (1, 1, 2, 5, 1, 6)
   ]
   def mock_roller(num_dice):
-    return rolls.pop(0)
+    select_roll = rolls.pop(0)
+    return select_roll[:num_dice]
   
   play(roller=mock_roller)
   # play()
